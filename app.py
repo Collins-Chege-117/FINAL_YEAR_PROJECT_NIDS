@@ -37,7 +37,7 @@ class User(db.Model):
     phone = db.Column(db.String(20)) 
     password = db.Column(db.String(255))
     is_paid = db.Column(db.Boolean, default=False)
-    # Notifications
+   
     smtp_email = db.Column(db.String(100))
     smtp_password = db.Column(db.String(100))
     email_enabled = db.Column(db.Boolean, default=False)
@@ -63,13 +63,12 @@ def trigger_stk_push(phone):
         shortcode = os.getenv("DARAJA_SHORTCODE", "174379")
         passkey = os.getenv("DARAJA_PASSKEY")
         
-        # 1. Get Access Token
+        
         auth_url = "https://safaricom.co.ke"
         res = requests.get(auth_url, auth=HTTPBasicAuth(ck, cs), timeout=5)
         token = res.json().get('access_token')
 
-        # 2. Trigger Push (Lipa na M-Pesa Online)
-        # Note: In a real app, 'Password' is a base64 encoded string of Shortcode+Passkey+Timestamp
+        
         stk_url = "https://safaricom.co.ke"
         headers = {"Authorization": f"Bearer {token}"}
         payload = {
@@ -77,7 +76,7 @@ def trigger_stk_push(phone):
             "Password": "MTc0Mzc5YmZiMjc5ZjlhYTliZGJjM2M1Y2VhY2VjM2E0OTZlMzI5MTc5ZDZlNjM4OGY4YTJjZTAwNTU4ZGYyMDI0MDgxMDIyMDQzOA==",
             "Timestamp": "20240810220438",
             "TransactionType": "CustomerPayBillOnline",
-            "Amount": 1, # Use 1 KES for testing
+            "Amount": 1, 
             "PartyA": phone,
             "PartyB": shortcode,
             "PhoneNumber": phone,
@@ -90,6 +89,18 @@ def trigger_stk_push(phone):
         print(f"M-Pesa error: {e}")
 
 
+@app.route('/payment-callback', methods=['POST'])
+def payment_callback():
+    data = request.json
+    if data['Body']['stkCallback']['ResultCode'] == 0:
+        metadata = data['Body']['stkCallback']['CallbackMetadata']['Item']
+        phone = [item['Value'] for item in metadata if item['Name'] == 'PhoneNumber'][0]
+        user = User.query.filter_by(phone=str(phone)).first()
+        if user:
+            user.is_paid = True
+            db.session.commit()
+            
+    return jsonify({"ResultCode": 0, "ResultDesc": "Accepted"})
 
 @app.route('/')
 def index():
@@ -138,6 +149,11 @@ def login():
 def dashboard():
     if 'user_id' not in session: return redirect(url_for('login'))
     user = User.query.get(session['user_id'])
+    
+    if not user.is_paid:
+        flash("Your account is pending payment. Please complete the M-Pesa prompt.")
+        return redirect(url_for('login'))
+        
     alerts = Alert.query.filter_by(user_id=user.id).order_by(Alert.timestamp.desc()).all()
     return render_template('dashboard.html', user=user, alerts=alerts)
 
@@ -157,7 +173,6 @@ def receive_alert():
 @app.route('/dashboard/sync')
 def sync_data():
     if 'user_id' not in session: return jsonify({"new_count": 0})
-    # Check if more alerts were added in the last 5 seconds
     new_alerts = Alert.query.filter_by(user_id=session['user_id']).count()
     return jsonify({"new_count": new_alerts})
 

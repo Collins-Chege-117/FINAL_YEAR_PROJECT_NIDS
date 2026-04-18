@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NIDS Console | Live Monitoring</title>
+    <link href="https://jsdelivr.net" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/console.css') }}">
+</head>
+<body>
+
+    <header class="top-header">
+        <div class="console-title">🛡️ NIDS SHIELD SYSTEM</div>
+        <div class="header-controls">
+            <span class="small me-3">User: {{ user.username }} | <a href="/logout" class="text-info">Logout</a></span>
+            <button class="btn-console">Events</button>
+            <button class="btn-console">Sensors</button>
+            <button class="btn-console" onclick="window.location.href='/dashboard/download-report'">Reports</button>
+        </div>
+    </header>
+
+    <div class="status-banner">
+        Timeline: LIVE_CAPTURE | Sensor_Status: ACTIVE | DB: SYNCHRONIZED
+    </div>
+
+    <div class="console-wrapper">
+        
+        <aside class="sidebar-console">
+            <div class="widget">
+                <div class="widget-head">Event Summary</div>
+                <div class="widget-content">
+                    Total Events: <span id="total-events" class="fw-bold">{{ alerts|length }}</span><br>
+                    High Priority: <span class="text-danger fw-bold">{{ alerts|length }}</span><br>
+                    Low Priority: 0
+                </div>
+            </div>
+
+            <div class="widget">
+                <div class="widget-head">Agent Download</div>
+                <div class="widget-content text-center">
+                    <p class="small">Install the sniffer on your local PC to begin monitoring.</p>
+                    <a href="/static/downloads/NIDS_Scanner.exe" class="btn btn-sm btn-dark w-100">Download .EXE</a>
+                </div>
+            </div>
+            
+            <div class="widget">
+                <div class="widget-head">System Info</div>
+                <div class="widget-content small">
+                    Host: railway-production<br>
+                    Engine: MySQL 8.0<br>
+                    Uptime: 99.9%
+                </div>
+            </div>
+        </aside>
+
+        
+        <main class="event-view">
+            <table class="event-table">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">PRI</th>
+                        <th style="width: 120px;">TIMESTAMP</th>
+                        <th style="width: 150px;">SOURCE_IP</th>
+                        <th>SIGNATURE / DETECTION_DESCRIPTION</th>
+                        <th style="width: 80px;">PROTO</th>
+                    </tr>
+                </thead>
+                <tbody id="live-alert-body">
+                    {% for alert in alerts %}
+                    <tr>
+                        <td><div class="priority-box prio-high">!</div></td>
+                        <td>{{ alert.timestamp.strftime('%H:%M:%S') }}</td>
+                        <td class="ip-cell">{{ alert.source_ip }}</td>
+                        <td><span class="signature-cell">[THREAT]</span> {{ alert.threat_type }}</td>
+                        <td>TCP/6</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </main>
+    </div>
+
+    <script>
+        function fetchNewAlerts() {
+            fetch('/dashboard/sync')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.new_count > 0) {
+                        location.reload(); 
+                    }
+                });
+        }
+        setInterval(fetchNewAlerts, 5000);
+    </script>
+</body>
+</html>

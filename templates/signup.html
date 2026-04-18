@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NIDS | Join</title>
+    <link href="https://jsdelivr.net" rel="stylesheet">
+    <link rel="stylesheet" href="https://cloudflare.com">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+<body class="auth-body">
+    <div class="container">
+        <div class="auth-card">
+            <h1>Sign Up</h1>
+            <div class="auth-divider"></div>
+
+            <form method="POST">
+                <div class="form-group-custom">
+                    <i class="fa fa-user input-icon"></i>
+                    <input type="text" name="username" class="form-input" placeholder="User Name" required>
+                </div>
+                <div class="form-group-custom">
+                    <i class="fa fa-envelope input-icon"></i>
+                    <input type="email" name="email" class="form-input" placeholder="Email Address" required>
+                </div>
+                <div class="form-group-custom">
+                    <i class="fa fa-phone input-icon"></i>
+                    <input type="text" name="phone" class="form-input" placeholder="Phone (2547XXXXXXXX)" required>
+                </div>
+                <div class="form-group-custom">
+                    <i class="fa fa-lock input-icon"></i>
+                    <input type="password" name="password" class="form-input" placeholder="Password" required>
+                </div>
+
+                <p class="small mb-4 text-uppercase fw-bold" style="letter-spacing: 1px;">Access Fee: 500 KES</p>
+                <button type="submit" class="btn-auth">REGISTER & PAY</button>
+            </form>
+            <p class="mt-4 small">Already a member? <a href="/login" class="text-white fw-bold">Sign In</a></p>
+        </div>
+    </div>
+</body>
+</html>

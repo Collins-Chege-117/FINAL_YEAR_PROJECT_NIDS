@@ -1,0 +1,9 @@
+Flask
+Flask-SQLAlchemy
+Flask-Mail
+pymysql
+cryptography
+requests
+python-dotenv
+reportlab
+gunicorn

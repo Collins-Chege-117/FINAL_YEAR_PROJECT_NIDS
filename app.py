@@ -98,22 +98,30 @@ def index():
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
-        hashed_pw = generate_password_hash(request.form['password'])
-        new_user = User(
-            username=request.form['username'],
-            email=request.form['email'],
-            phone=request.form['phone'],
-            password=hashed_pw,
-            is_paid=True # Forced True for demo purposes
-        )
-        try:
+        email = request.form.get('email')
+        
+        if User.query.filter_by(email=email).first():
+            flash("Email already exists. Please login.")
+            return redirect(url_for('login'))
+        payment_response = trigger_stk_push(request.form.get('phone'))
+        
+        if payment_response and payment_response.status_code == 200:
+            hashed_pw = generate_password_hash(request.form['password'])
+            new_user = User(
+                username=request.form['username'],
+                email=email,
+                phone=request.form['phone'],
+                password=hashed_pw,
+                is_paid=False
+            )
             db.session.add(new_user)
             db.session.commit()
-            trigger_stk_push(new_user.phone)
-            flash("Registration Successful! Please login.")
+            flash("M-Pesa prompt sent! Log in once you complete payment.")
             return redirect(url_for('login'))
-        except:
-            flash("User already exists!")
+        else:
+            flash("Payment initialization failed. Please check your phone number.")
+            return redirect(url_for('signup'))
+
     return render_template('signup.html')
 
 @app.route('/login', methods=['GET', 'POST'])

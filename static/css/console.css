@@ -1,0 +1,118 @@
+:root {
+    --console-bg: #d1d1d1;
+    --header-dark: #222222;
+    --sidebar-gray: #f4f4f4;
+    --border-gray: #aaaaaa;
+    --button-blue: #3b5998;
+    --alert-red: #cc0000;
+}
+
+body {
+    background-color: var(--console-bg);
+    font-family: 'Arial', sans-serif;
+    font-size: 0.85rem;
+    color: #333;
+    margin: 0;
+}
+
+/* Header Area */
+.top-header {
+    background: var(--header-dark);
+    color: white;
+    padding: 8px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.console-title { font-weight: bold; font-size: 1rem; }
+
+.header-controls .btn-console {
+    background: var(--button-blue);
+    color: white;
+    border: 1px solid #1d2a4d;
+    font-size: 0.75rem;
+    padding: 2px 12px;
+    margin-left: 5px;
+}
+
+/* Status Banner */
+.status-banner {
+    background: #333;
+    color: #00ff00;
+    padding: 3px 15px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.75rem;
+    border-bottom: 1px solid #000;
+}
+
+/* Main Container */
+.console-wrapper {
+    display: flex;
+    height: calc(100vh - 65px);
+}
+
+/* Sidebar Widgets */
+.sidebar-console {
+    width: 230px;
+    background: var(--sidebar-gray);
+    border-right: 1px solid var(--border-gray);
+    padding: 10px;
+}
+
+.widget {
+    border: 1px solid #ccc;
+    background: white;
+    margin-bottom: 15px;
+}
+
+.widget-head {
+    background: #e1e1e1;
+    padding: 4px 10px;
+    font-weight: bold;
+    border-bottom: 1px solid #ccc;
+}
+
+.widget-content { padding: 10px; line-height: 1.6; }
+
+/* Main Event Table */
+.event-view {
+    flex-grow: 1;
+    background: white;
+    overflow-y: auto;
+}
+
+.event-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.event-table th {
+    background: #e1e1e1;
+    border: 1px solid #ccc;
+    padding: 6px;
+    text-align: left;
+    position: sticky;
+    top: 0;
+}
+
+.event-table td {
+    border: 1px solid #eee;
+    padding: 6px;
+    vertical-align: middle;
+}
+
+.priority-box {
+    width: 25px;
+    height: 25px;
+    color: white;
+    text-align: center;
+    font-weight: bold;
+    border-radius: 2px;
+    line-height: 25px;
+}
+
+.prio-high { background: var(--alert-red); }
+
+.ip-cell { font-weight: bold; font-family: monospace; color: #000; }
+.signature-cell { color: #cc0000; font-weight: bold; }

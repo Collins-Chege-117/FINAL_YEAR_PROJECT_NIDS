@@ -1,0 +1,82 @@
+:root {
+    --nids-teal: #1aa1a5;
+    --nids-white: #ffffff;
+    --nids-red: #ea4335;
+}
+
+body { 
+    background-color: var(--nids-teal); 
+    color: var(--nids-white); 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    height: 100vh; 
+    margin: 0;
+    overflow: hidden;
+}
+
+.hero-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+}
+
+.brand-logo {
+    font-size: 5rem;
+    font-weight: 700;
+    letter-spacing: -2px;
+    margin-bottom: 0;
+}
+
+.hero-subtext {
+    font-size: 1.5rem;
+    opacity: 0.9;
+    max-width: 600px;
+    margin-bottom: 40px;
+}
+
+.btn-nids {
+    background: transparent;
+    border: 2px solid var(--nids-white);
+    color: var(--nids-white);
+    padding: 12px 40px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    border-radius: 5px;
+    display: inline-block;
+    margin: 10px;
+}
+
+.btn-nids:hover {
+    background: var(--nids-white);
+    color: var(--nids-teal);
+    transform: translateY(-3px);
+}
+
+.social-icons {
+    position: absolute;
+    bottom: 40px;
+    font-size: 1.5rem;
+}
+
+.social-icons i {
+    margin: 0 15px;
+    cursor: pointer;
+    transition: opacity 0.3s;
+}
+
+.social-icons i:hover {
+    opacity: 0.7;
+}
+
+.copyright {
+    position: absolute;
+    bottom: 15px;
+    font-size: 0.8rem;
+    opacity: 0.6;
+}

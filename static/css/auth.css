@@ -1,0 +1,100 @@
+.auth-body {
+    background-color: #1aa1a5;
+    color: white;
+    font-family: 'Segoe UI', sans-serif;
+    display: flex;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 400px;
+    margin: auto;
+    text-align: center;
+}
+
+.auth-card h1 {
+    font-weight: 300;
+    margin-bottom: 5px;
+}
+
+.auth-divider {
+    width: 60px;
+    border-top: 3px solid white;
+    margin: 20px auto 40px auto;
+    opacity: 1;
+}
+
+.form-group-custom {
+    position: relative;
+    margin-bottom: 25px;
+}
+
+.input-icon {
+    position: absolute;
+    left: 5px;
+    top: 12px;
+    color: white;
+}
+
+.form-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 0;
+    color: white;
+    padding: 10px 10px 10px 35px;
+    width: 100%;
+    transition: 0.3s;
+}
+
+.form-input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.form-input:focus {
+    background: transparent;
+    border-bottom: 2px solid white;
+    color: white;
+    box-shadow: none;
+    outline: none;
+}
+
+.btn-auth {
+    background: transparent;
+    border: 1px solid white;
+    color: white;
+    width: 100%;
+    padding: 12px;
+    font-weight: bold;
+    border-radius: 5px;
+    transition: 0.3s;
+    margin-top: 10px;
+}
+
+.btn-auth:hover {
+    background: white;
+    color: #1aa1a5;
+}
+
+.btn-google {
+    background: #ea4335;
+    border: none;
+    color: white;
+    width: 100%;
+    padding: 12px;
+    font-weight: bold;
+    border-radius: 5px;
+    margin-top: 15px;
+}
+
+.social-footer {
+    margin-top: 50px;
+    font-size: 1.5rem;
+}
+
+.social-footer i {
+    margin: 0 10px;
+    opacity: 0.8;
+}

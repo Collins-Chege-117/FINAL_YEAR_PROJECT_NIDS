@@ -145,14 +145,26 @@ def dashboard():
 @app.route('/api/alerts', methods=['POST'])
 def receive_alert():
     data = request.json
+    
+    # 1. Try to find the user by the username sent from the .exe
+    username_from_agent = data.get("username")
+    user = User.query.filter_by(username=username_from_agent).first()
+    
+    # 2. If user exists, use their ID. Otherwise, fallback to ID 1 for the demo.
+    assigned_user_id = user.id if user else 1
+
     alert = Alert(
-        user_id=data.get("user_id", 1),
+        user_id=assigned_user_id,
         source_ip=data.get("source_ip"),
         threat_type=data.get("threat_type")
     )
+
     db.session.add(alert)
     db.session.commit()
+
+    print(f"[API] Alert saved for user: {username_from_agent or 'Unknown (Fallback to 1)'}")
     return jsonify({"status": "success"}), 200
+
 
 @app.route('/api/alerts', methods=['GET'])
 def get_alerts():

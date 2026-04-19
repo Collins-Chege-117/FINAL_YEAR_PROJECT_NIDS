@@ -8,8 +8,8 @@ load_dotenv()
 
 class NIDSSniffer:
     def __init__(self):
-        # ✅ FIXED: Put your REAL Railway backend endpoint here
-        self.RAILWAY_API_URL = "https://your-app-name.up.railway.app/api/alerts"
+       
+        self.RAILWAY_API_URL = "https://web-production-8c5fe.up.railway.app/api/alerts"
         
         self.USER_ID = 1
 

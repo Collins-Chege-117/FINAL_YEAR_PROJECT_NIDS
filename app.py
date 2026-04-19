@@ -70,16 +70,24 @@ def login():
 def dashboard():
     if 'user_id' not in session: return redirect(url_for('login'))
     user = User.query.get(session['user_id'])
+    
+    # FOR THE DEMO: Show every single alert in the database
     alerts = Alert.query.order_by(Alert.timestamp.desc()).all()
     return render_template('dashboard.html', user=user, alerts=alerts)
 
 @app.route('/api/alerts', methods=['POST'])
 def receive_alert():
     data = request.json
-    new_alert = Alert(source_ip=data['source_ip'], threat_type=data['threat_type'])
+    # FOR THE DEMO: Ignore the user_id from the sniffer and just save it
+    new_alert = Alert(
+        user_id=1, 
+        source_ip=data.get('source_ip'),
+        threat_type=data.get('threat_type')
+    )
     db.session.add(new_alert)
     db.session.commit()
     return jsonify({"status": "success"}), 200
+
 
 @app.route('/dashboard/sync')
 def sync():

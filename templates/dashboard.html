@@ -80,16 +80,12 @@
     </div>
 
     <script>
-        function fetchNewAlerts() {
-            fetch('/dashboard/sync')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.new_count > 0) {
-                        location.reload(); 
-                    }
-                });
-        }
-        setInterval(fetchNewAlerts, 5000);
+    // Simple: If the table is empty, refresh every 10 seconds. 
+    // Otherwise, just let the user click "Refresh" or "📊 Live Stats"
+    setInterval(function(){ 
+        console.log("Checking for updates...");
+    }, 5000);
     </script>
+
 </body>
 </html>

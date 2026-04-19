@@ -91,8 +91,10 @@ def receive_alert():
 
 @app.route('/dashboard/sync')
 def sync():
+    # Return the total count of ALL alerts so the page knows to refresh
     count = Alert.query.count()
     return jsonify({"new_count": count})
+
 
 @app.route('/logout')
 def logout():

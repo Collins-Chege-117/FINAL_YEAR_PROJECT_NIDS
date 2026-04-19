@@ -131,8 +131,16 @@ def login():
 def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
+
+    # 1. Fetch the user object using the ID stored in the session
+    user = User.query.get(session['user_id'])
+    
+    # 2. Fetch the alerts
     alerts = Alert.query.filter_by(user_id=session['user_id']).all()
-    return render_template('dashboard.html', alerts=alerts)
+    
+    # 3. Pass BOTH user and alerts to the template
+    return render_template('dashboard.html', user=user, alerts=alerts)
+
 
 @app.route('/api/alerts', methods=['POST'])
 def receive_alert():

@@ -75,6 +75,7 @@ class NIDSSniffer:
     def sniff_callback(self, packet):
         if packet.haslayer(IP):
             src_ip = packet[IP].src
+            print(f"[PACKET] {src_ip}")
 
             # Ignore local traffic
             if src_ip.startswith(("192.168.", "127.", "10.")):

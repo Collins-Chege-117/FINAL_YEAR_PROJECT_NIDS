@@ -5,6 +5,7 @@
     --border-gray: #aaaaaa;
     --button-blue: #3b5998;
     --alert-red: #cc0000;
+    --safe-green: #28a745; /* Added for visual cues */
 }
 
 body {
@@ -102,6 +103,7 @@ body {
     vertical-align: middle;
 }
 
+/* --- PRIORITY BOXES --- */
 .priority-box {
     width: 25px;
     height: 25px;
@@ -113,6 +115,10 @@ body {
 }
 
 .prio-high { background: var(--alert-red); }
+.prio-low { background: var(--safe-green); } /* Added for safe traffic */
 
 .ip-cell { font-weight: bold; font-family: monospace; color: #000; }
-.signature-cell { color: #cc0000; font-weight: bold; }
+
+/* --- TEXT TAGS --- */
+.signature-cell { color: var(--alert-red); font-weight: bold; }
+.safe-cell { color: var(--safe-green); font-weight: bold; } /* Added for safe traffic */

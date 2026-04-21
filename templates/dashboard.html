@@ -26,11 +26,14 @@
         
         <aside class="sidebar-console">
             <div class="widget">
-                <div class="widget-head">Event Summary</div>
                 <div class="widget-content">
-                    Total Events: <span id="total-events" class="fw-bold">{{ alerts|length }}</span><br>
-                    High Priority: <span class="text-danger fw-bold">{{ alerts|length }}</span><br>
-                    Low Priority: 0
+                    Total Events: <span class="fw-bold">{{ alerts|length }}</span><br>
+                    High Priority: <span class="text-danger fw-bold">
+                        {{ alerts | selectattr('severity', 'equalto', 'HIGH') | list | length }}
+                    </span><br>
+                    Low Priority: <span class="text-success fw-bold">
+                        {{ alerts | selectattr('severity', 'equalto', 'LOW') | list | length }}
+                    </span>
                 </div>
             </div>
 
@@ -56,24 +59,29 @@
         <main class="event-view">
             <table class="event-table">
                 <thead>
-                    <tr>
-                        <th style="width: 40px;">PRI</th>
-                        <th style="width: 120px;">TIMESTAMP</th>
-                        <th style="width: 150px;">SOURCE_IP</th>
-                        <th>SIGNATURE / DETECTION_DESCRIPTION</th>
-                        <th style="width: 80px;">PROTO</th>
-                    </tr>
-                </thead>
-                <tbody id="live-alert-body">
                     {% for alert in alerts %}
-                    <tr>
-                        <td><div class="priority-box prio-high">!</div></td>
-                        <td>{{ alert.timestamp.strftime('%H:%M:%S') }}</td>
-                        <td class="ip-cell">{{ alert.source_ip }}</td>
-                        <td><span class="signature-cell">[THREAT]</span> {{ alert.threat_type }}</td>
-                        <td>TCP/6</td>
-                    </tr>
-                    {% endfor %}
+                        <tr>
+                            <td>
+                                <!-- Change icon color based on threat -->
+                                {% if alert.threat_type == "[SAFE]" %}
+                                    <div class="priority-box prio-low">✓</div>
+                                {% else %}
+                                    <div class="priority-box prio-high">!</div>
+                                {% endif %}
+                            </td>
+                            <td>{{ alert.timestamp.strftime('%H:%M:%S') }}</td>
+                            <td class="ip-cell">{{ alert.source_ip }}</td>
+                            <td>
+                                <!-- Change text color based on threat -->
+                                {% if alert.threat_type == "[SAFE]" %}
+                                    <span class="text-safe">{{ alert.threat_type }}</span> Normal Traffic Detected
+                                {% else %}
+                                    <span class="signature-cell">[THREAT]</span> {{ alert.threat_type }}
+                                {% endif %}
+                            </td>
+                            <td>TCP/6</td>
+                        </tr>
+                        {% endfor %}
                 </tbody>
             </table>
         </main>

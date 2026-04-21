@@ -27,11 +27,13 @@ if DATABASE_URL.startswith("mysql://"):
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-app.config['MAIL_SERVER'] = '://gmail.com'
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = os.getenv("EMAIL_USER")
 app.config['MAIL_PASSWORD'] = os.getenv("EMAIL_PASS")
+
+
 mail = Mail(app)
 
 db = SQLAlchemy(app)

@@ -40,6 +40,7 @@ db = SQLAlchemy(app)
 
 # ================= MODELS =================
 class User(db.Model):
+    __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50))
     email = db.Column(db.String(100), unique=True)
@@ -48,6 +49,7 @@ class User(db.Model):
     is_paid = db.Column(db.Boolean, default=False)
 
 class Alert(db.Model):
+    __tablename__ = 'alert'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer)
     source_ip = db.Column(db.String(45))

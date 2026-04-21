@@ -170,8 +170,20 @@ def receive_alert():
 
 @app.route('/api/alerts', methods=['GET'])
 def get_alerts():
-    alerts = Alert.query.all()
-    return jsonify([{"ip": a.source_ip, "threat": a.threat_type, "time": a.timestamp.isoformat()} for a in alerts])
+    # Only get alerts for the logged-in user
+    if 'user_id' not in session:
+        return jsonify([]), 401
+        
+    alerts = Alert.query.filter_by(user_id=session['user_id']).all()
+    return jsonify([
+        {
+            "ip": a.source_ip,
+            "threat": a.threat_type,
+            "time": a.timestamp.isoformat(),
+            "severity": a.severity
+        } for a in alerts
+    ])
+
 
 @app.route('/dashboard/download-report')
 def download_pdf():

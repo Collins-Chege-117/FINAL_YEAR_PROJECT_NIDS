@@ -87,13 +87,51 @@
         </main>
     </div>
 
-    <script>
-    // Simple: If the table is empty, refresh every 10 seconds. 
-    // Otherwise, just let the user click "Refresh" or "📊 Live Stats"
-    setInterval(function(){ 
-        console.log("Checking for updates...");
-    }, 5000);
-    </script>
+<script>
+function fetchAlerts() {
+    fetch('/api/alerts')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('live-alert-body');
+            const totalEvents = document.getElementById('total-events');
+            
+            // Sort data so newest is at the top
+            data.sort((a, b) => new Date(b.time) - new Date(a.time));
+            
+            tbody.innerHTML = ''; // Clear current table
+            totalEvents.innerText = data.length; // Update total count
+
+            data.forEach(alert => {
+                const isSafe = alert.threat === "[SAFE]";
+                const timeStr = new Date(alert.time).toLocaleTimeString('en-GB', { hour12: false });
+                
+                const row = `
+                    <tr>
+                        <td>
+                            <div class="priority-box ${isSafe ? 'prio-low' : 'prio-high'}">
+                                ${isSafe ? '✓' : '!'}
+                            </div>
+                        </td>
+                        <td>${timeStr}</td>
+                        <td class="ip-cell">${alert.ip}</td>
+                        <td>
+                            ${isSafe ? 
+                                `<span class="safe-cell">[SAFE]</span> Normal Traffic` : 
+                                `<span class="signature-cell">[THREAT]</span> ${alert.threat}`
+                            }
+                        </td>
+                        <td>TCP/6</td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        })
+        .catch(err => console.log("Polling error:", err));
+}
+
+// Refresh every 5 seconds
+setInterval(fetchAlerts, 5000);
+</script>
 
 </body>
 </html>

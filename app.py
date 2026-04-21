@@ -2,6 +2,7 @@ import os
 import requests
 from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flask_mail import Mail, Message
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
@@ -25,6 +26,13 @@ if DATABASE_URL.startswith("mysql://"):
 
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+app.config['MAIL_SERVER'] = '://gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.getenv("EMAIL_USER")
+app.config['MAIL_PASSWORD'] = os.getenv("EMAIL_PASS")
+mail = Mail(app)
 
 db = SQLAlchemy(app)
 
@@ -87,6 +95,17 @@ def trigger_stk_push(phone):
     except Exception as e:
         print("[DARAJA ERROR]", e)
         return None
+
+def send_threat_email(user_email, threat_type, ip):
+    try:
+        msg = Message("⚠️ NIDS SHIELD: Threat Detected!",
+                      sender=app.config['MAIL_USERNAME'],
+                      recipients=[user_email])
+        msg.body = f"Alert: A malicious connection was detected.\n\nType: {threat_type}\nSource IP: {ip}\n\nCheck your dashboard for details."
+        mail.send(msg)
+    except Exception as e:
+        print(f"Email failed: {e}")
+
 
 # ================= ROUTES =================
 @app.route('/')
@@ -154,6 +173,9 @@ def receive_alert():
     
     # Logic: If it's safe, set severity to LOW. If it's a threat, set to HIGH.
     severity = "HIGH" if threat_type != "[SAFE]" else "LOW"
+
+    if user and severity == "HIGH":
+        send_threat_email(user.email, threat_type, data.get("source_ip"))
 
     alert = Alert(
         user_id=user_id,

@@ -37,7 +37,8 @@
                 <div class="widget-head">Agent Download</div>
                 <div class="widget-content text-center">
                     <p class="small">Install the sniffer on your local PC to begin monitoring.</p>
-                    <a href="/static/downloads/NIDS_Scanner.exe" class="btn btn-sm btn-dark w-100">Download .EXE</a>
+                    <a href="/static/downloads/NIDS_Scanner.exe" class="btn btn-sm btn-primary w-100 mb-2">Download .EXE</a>
+                    <a href="/static/downloads/Instructions.pdf" class="btn btn-sm btn-outline-secondary w-100">Installation Guide</a>
                 </div>
             </div>
             
@@ -92,65 +93,22 @@
 
 <script>
 function fetchAlerts() {
-    // Adding a timestamp ?t= makes every request unique to prevent caching
-    fetch('/api/alerts?t=' + new Date().getTime(), {
-        credentials: 'include' // CRITICAL: This sends your login session cookie
-    })
-    .then(response => {
-        if (response.status === 401) {
-            console.error("Session expired. Please log in again.");
-            return [];
-        }
-        return response.json();
-    })
+    fetch('/api/alerts?t=' + new Date().getTime(), { credentials: 'include' })
+    .then(response => response.json())
     .then(data => {
         const tbody = document.getElementById('live-alert-body');
-        const totalEvents = document.getElementById('total-events');
-        const highPriority = document.getElementById('high-count'); // Add these IDs to your HTML
-        const lowPriority = document.getElementById('low-count');
+        if (!tbody || !data) return;
 
-        if (!data || data.length === 0) return;
-
-        // Update counters
-        totalEvents.innerText = data.length;
-        highPriority.innerText = data.filter(a => a.severity === 'HIGH').length;
-        lowPriority.innerText = data.filter(a => a.severity === 'LOW').length;
-
-        // Build the new table HTML
+        // Sort newest first and SLICE to only the first 20 items
+        const limitedData = data.sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 20);
+        
         let tableHTML = '';
-        data.sort((a, b) => new Date(b.time) - new Date(a.time)); // Newest first
-
-        data.forEach(alert => {
-            const isSafe = alert.threat === "[SAFE]";
-            const timeStr = new Date(alert.time).toLocaleTimeString('en-GB', { hour12: false });
-            
-            tableHTML += `
-                <tr>
-                    <td>
-                        <div class="priority-box ${isSafe ? 'prio-low' : 'prio-high'}">
-                            ${isSafe ? '✓' : '!'}
-                        </div>
-                    </td>
-                    <td>${timeStr}</td>
-                    <td class="ip-cell">${alert.ip}</td>
-                    <td>
-                        ${isSafe ? 
-                            `<span class="safe-cell">[SAFE]</span> Normal Traffic` : 
-                            `<span class="signature-cell">[THREAT]</span> ${alert.threat}`
-                        }
-                    </td>
-                    <td>TCP/6</td>
-                </tr>
-            `;
+        limitedData.forEach(alert => {
+            // ... (keep your existing row building logic here) ...
         });
         tbody.innerHTML = tableHTML;
-    })
-    .catch(err => console.error("Polling error:", err));
+    });
 }
-
-// Start polling immediately and then every 5 seconds
-fetchAlerts();
-setInterval(fetchAlerts, 5000);
 </script>
 
 </body>

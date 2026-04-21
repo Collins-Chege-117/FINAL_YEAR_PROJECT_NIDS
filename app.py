@@ -150,11 +150,12 @@ def signup():
             email=email,
             phone=request.form['phone'],
             password=hashed_pw,
-            is_paid=True
+            is_paid=False
         )
         db.session.add(user)
         db.session.commit()
-        flash("Signup successful!")
+
+        flash("M-Pesa prompt sent! Complete payment on your phone, then log in.")
         return redirect(url_for('login'))
     return render_template('signup.html')
 
@@ -163,6 +164,10 @@ def login():
     if request.method == 'POST':
         user = User.query.filter_by(email=request.form['email']).first()
         if user and check_password_hash(user.password, request.form['password']):
+            if not user.is_paid:
+                flash("Access Denied: Please complete your M-Pesa payment first.")
+                return redirect(url_for('login'))
+            
             session['user_id'] = user.id
             return redirect(url_for('dashboard'))
         flash("Invalid credentials")

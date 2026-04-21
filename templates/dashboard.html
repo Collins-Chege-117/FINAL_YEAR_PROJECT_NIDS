@@ -53,34 +53,41 @@
 
         
         <main class="event-view">
-            <table class="event-table">
-                <thead>
-                    {% for alert in alerts %}
-                        <tr>
-                            <td>
-                                <!-- Change icon color based on threat -->
-                                {% if alert.threat_type == "[SAFE]" %}
-                                    <div class="priority-box prio-low">✓</div>
-                                {% else %}
-                                    <div class="priority-box prio-high">!</div>
-                                {% endif %}
-                            </td>
-                            <td>{{ alert.timestamp.strftime('%H:%M:%S') }}</td>
-                            <td class="ip-cell">{{ alert.source_ip }}</td>
-                            <td>
-                                <!-- Change text color based on threat -->
-                                {% if alert.threat_type == "[SAFE]" %}
-                                    <span class="text-safe">{{ alert.threat_type }}</span> Normal Traffic Detected
-                                {% else %}
-                                    <span class="signature-cell">[THREAT]</span> {{ alert.threat_type }}
-                                {% endif %}
-                            </td>
-                            <td>TCP/6</td>
-                        </tr>
-                        {% endfor %}
-                </tbody>
-            </table>
-        </main>
+    <table class="event-table">
+        <thead>
+            <tr>
+                <th style="width: 40px;">PRI</th>
+                <th style="width: 120px;">TIMESTAMP</th>
+                <th style="width: 150px;">SOURCE_IP</th>
+                <th>SIGNATURE / DETECTION_DESCRIPTION</th>
+                <th style="width: 80px;">PROTO</th>
+            </tr>
+        </thead>
+        <!-- Added the ID here so JavaScript can find it -->
+        <tbody id="live-alert-body">
+            {% for alert in alerts %}
+            <tr>
+                <td>
+                    <div class="priority-box {% if alert.threat_type == '[SAFE]' %}prio-low{% else %}prio-high{% endif %}">
+                        {% if alert.threat_type == "[SAFE]" %}✓{% else %}!{% endif %}
+                    </div>
+                </td>
+                <td>{{ alert.timestamp.strftime('%H:%M:%S') }}</td>
+                <td class="ip-cell">{{ alert.source_ip }}</td>
+                <td>
+                    {% if alert.threat_type == "[SAFE]" %}
+                        <span class="safe-cell">[SAFE]</span> Normal Traffic Detected
+                    {% else %}
+                        <span class="signature-cell">[THREAT]</span> {{ alert.threat_type }}
+                    {% endif %}
+                </td>
+                <td>TCP/6</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</main>
+
     </div>
 
 <script>

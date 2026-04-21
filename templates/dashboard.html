@@ -105,7 +105,7 @@ function fetchAlerts() {
         // 2. SENSOR STATUS LOGIC (OFFLINE vs ACTIVE)
         if (data.length > 0 && sensorState) {
             const lastAlert = data[0]; // Get the newest alert
-            const lastTime = new Date(lastAlert.time);
+            const lastTime = new Date(lastAlert.time + "Z");
             const now = new Date();
             const diffSeconds = (now - lastTime) / 1000;
 

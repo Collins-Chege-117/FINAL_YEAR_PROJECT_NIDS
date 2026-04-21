@@ -128,7 +128,7 @@ function fetchAlerts() {
         let tableHTML = '';
         limitedData.forEach(alert => {
             const isSafe = alert.threat === "[SAFE]";
-            const timeStr = new Date(alert.time).toLocaleTimeString('en-GB', { hour12: false });
+            const timeStr = new Date(alert.time + "Z").toLocaleTimeString('en-GB', { hour12: false });
             
             tableHTML += `
                 <tr>

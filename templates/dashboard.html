@@ -12,8 +12,6 @@
         <div class="console-title">🛡️ NIDS SHIELD SYSTEM</div>
         <div class="header-controls">
             <span class="small me-3">User: {{ user.username }} | <a href="/logout" class="text-info">Logout</a></span>
-            <button class="btn-console">Events</button>
-            <button class="btn-console">Sensors</button>
             <button class="btn-console" onclick="window.location.href='/dashboard/download-report'">Reports</button>
         </div>
     </header>
@@ -99,16 +97,40 @@ function fetchAlerts() {
         const tbody = document.getElementById('live-alert-body');
         if (!tbody || !data) return;
 
-        // Sort newest first and SLICE to only the first 20 items
-        const limitedData = data.sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 20);
+        // SORT DESCENDING (Newest Time first)
+        data.sort((a, b) => new Date(b.time) - new Date(a.time));
+
+        // LIMIT TO 20 (The 20 most recent after sorting)
+        const limitedData = data.slice(0, 20);
         
         let tableHTML = '';
         limitedData.forEach(alert => {
-            // ... (keep your existing row building logic here) ...
+            const isSafe = alert.threat === "[SAFE]";
+            const timeStr = new Date(alert.time).toLocaleTimeString('en-GB', { hour12: false });
+            
+            tableHTML += `
+                <tr>
+                    <td>
+                        <div class="priority-box ${isSafe ? 'prio-low' : 'prio-high'}">
+                            ${isSafe ? '✓' : '!'}
+                        </div>
+                    </td>
+                    <td>${timeStr}</td>
+                    <td class="ip-cell">${alert.ip}</td>
+                    <td>
+                        ${isSafe ? 
+                            `<span class="safe-cell">[SAFE]</span> Normal Traffic` : 
+                            `<span class="signature-cell">[THREAT]</span> ${alert.threat}`
+                        }
+                    </td>
+                    <td>TCP/6</td>
+                </tr>
+            `;
         });
         tbody.innerHTML = tableHTML;
     });
 }
+setInterval(fetchAlerts, 5000);
 </script>
 
 </body>

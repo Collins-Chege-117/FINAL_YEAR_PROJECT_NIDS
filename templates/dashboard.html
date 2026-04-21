@@ -27,13 +27,9 @@
         <aside class="sidebar-console">
             <div class="widget">
                 <div class="widget-content">
-                    Total Events: <span class="fw-bold">{{ alerts|length }}</span><br>
-                    High Priority: <span class="text-danger fw-bold">
-                        {{ alerts | selectattr('severity', 'equalto', 'HIGH') | list | length }}
-                    </span><br>
-                    Low Priority: <span class="text-success fw-bold">
-                        {{ alerts | selectattr('severity', 'equalto', 'LOW') | list | length }}
-                    </span>
+                    Total Events: <span id="total-events" class="fw-bold">{{ alerts|length }}</span><br>
+                    High Priority: <span id="high-count" class="text-danger fw-bold">...</span><br>
+                    Low Priority: <span id="low-count" class="text-success fw-bold">...</span>
                 </div>
             </div>
 
@@ -89,47 +85,64 @@
 
 <script>
 function fetchAlerts() {
-    fetch('/api/alerts')
-        .then(response => response.json())
-        .then(data => {
-            const tbody = document.getElementById('live-alert-body');
-            const totalEvents = document.getElementById('total-events');
-            
-            // Sort data so newest is at the top
-            data.sort((a, b) => new Date(b.time) - new Date(a.time));
-            
-            tbody.innerHTML = ''; // Clear current table
-            totalEvents.innerText = data.length; // Update total count
+    // Adding a timestamp ?t= makes every request unique to prevent caching
+    fetch('/api/alerts?t=' + new Date().getTime(), {
+        credentials: 'include' // CRITICAL: This sends your login session cookie
+    })
+    .then(response => {
+        if (response.status === 401) {
+            console.error("Session expired. Please log in again.");
+            return [];
+        }
+        return response.json();
+    })
+    .then(data => {
+        const tbody = document.getElementById('live-alert-body');
+        const totalEvents = document.getElementById('total-events');
+        const highPriority = document.getElementById('high-count'); // Add these IDs to your HTML
+        const lowPriority = document.getElementById('low-count');
 
-            data.forEach(alert => {
-                const isSafe = alert.threat === "[SAFE]";
-                const timeStr = new Date(alert.time).toLocaleTimeString('en-GB', { hour12: false });
-                
-                const row = `
-                    <tr>
-                        <td>
-                            <div class="priority-box ${isSafe ? 'prio-low' : 'prio-high'}">
-                                ${isSafe ? '✓' : '!'}
-                            </div>
-                        </td>
-                        <td>${timeStr}</td>
-                        <td class="ip-cell">${alert.ip}</td>
-                        <td>
-                            ${isSafe ? 
-                                `<span class="safe-cell">[SAFE]</span> Normal Traffic` : 
-                                `<span class="signature-cell">[THREAT]</span> ${alert.threat}`
-                            }
-                        </td>
-                        <td>TCP/6</td>
-                    </tr>
-                `;
-                tbody.innerHTML += row;
-            });
-        })
-        .catch(err => console.log("Polling error:", err));
+        if (!data || data.length === 0) return;
+
+        // Update counters
+        totalEvents.innerText = data.length;
+        highPriority.innerText = data.filter(a => a.severity === 'HIGH').length;
+        lowPriority.innerText = data.filter(a => a.severity === 'LOW').length;
+
+        // Build the new table HTML
+        let tableHTML = '';
+        data.sort((a, b) => new Date(b.time) - new Date(a.time)); // Newest first
+
+        data.forEach(alert => {
+            const isSafe = alert.threat === "[SAFE]";
+            const timeStr = new Date(alert.time).toLocaleTimeString('en-GB', { hour12: false });
+            
+            tableHTML += `
+                <tr>
+                    <td>
+                        <div class="priority-box ${isSafe ? 'prio-low' : 'prio-high'}">
+                            ${isSafe ? '✓' : '!'}
+                        </div>
+                    </td>
+                    <td>${timeStr}</td>
+                    <td class="ip-cell">${alert.ip}</td>
+                    <td>
+                        ${isSafe ? 
+                            `<span class="safe-cell">[SAFE]</span> Normal Traffic` : 
+                            `<span class="signature-cell">[THREAT]</span> ${alert.threat}`
+                        }
+                    </td>
+                    <td>TCP/6</td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = tableHTML;
+    })
+    .catch(err => console.error("Polling error:", err));
 }
 
-// Refresh every 5 seconds
+// Start polling immediately and then every 5 seconds
+fetchAlerts();
 setInterval(fetchAlerts, 5000);
 </script>
 

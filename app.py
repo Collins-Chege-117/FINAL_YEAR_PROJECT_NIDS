@@ -1,5 +1,6 @@
 import os
 import requests
+import base64
 from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_mail import Mail, Message
@@ -77,25 +78,38 @@ def trigger_stk_push(phone):
         res = requests.get(auth_url, auth=HTTPBasicAuth(ck, cs))
         token = res.json().get("access_token")
 
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        str_to_encode = shortcode + passkey + timestamp
+        online_password = base64.b64encode(str_to_encode.encode()).decode('utf-8')
+
+        # 3. Format Phone Number to 254XXXXXXXXX
+        if phone.startswith("0"):
+            phone = "254" + phone[1:]
+        elif phone.startswith("+254"):
+            phone = phone[1:]
+        elif phone.startswith("7") or phone.startswith("1"):
+            phone = "254" + phone
+
         stk_url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
         headers = {"Authorization": f"Bearer {token}"}
 
         payload = {
             "BusinessShortCode": shortcode,
-            "Password": passkey,
-            "Timestamp": datetime.now().strftime('%Y%m%d%H%M%S'),
+            "Password": online_password,
+            "Timestamp": timestamp,
             "TransactionType": "CustomerPayBillOnline",
             "Amount": 1,
             "PartyA": phone,
             "PartyB": shortcode,
             "PhoneNumber": phone,
-            "CallBackURL": "https://your-app-name.up.railway.app/callback",
-            "AccountReference": "NIDS",
-            "TransactionDesc": "Access Fee"
+            "CallBackURL": "https://web-production-8c5fe.up.railway.app/callback",
+            "AccountReference": "NIDS_SHIELD",
+            "TransactionDesc": "Payment For NIDS Access"
         }
 
         response = requests.post(stk_url, json=payload, headers=headers)
         return response
+        print("[DARAJA RESPONSE]", response.text)
     except Exception as e:
         print("[DARAJA ERROR]", e)
         return None

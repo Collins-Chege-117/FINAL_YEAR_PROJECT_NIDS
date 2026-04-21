@@ -96,15 +96,19 @@ def trigger_stk_push(phone):
         print("[DARAJA ERROR]", e)
         return None
 
-def send_threat_email(user_email, threat_type, ip):
+def notify_user_of_threat(email, threat_type, ip):
     try:
-        msg = Message("⚠️ NIDS SHIELD: Threat Detected!",
+        msg = Message("🔴 NIDS SHIELD: HIGH PRIORITY ALERT",
                       sender=app.config['MAIL_USERNAME'],
-                      recipients=[user_email])
-        msg.body = f"Alert: A malicious connection was detected.\n\nType: {threat_type}\nSource IP: {ip}\n\nCheck your dashboard for details."
+                      recipients=[email])
+        msg.body = f"Hello,\n\nA confirmed threat has been detected on your network.\n\n" \
+                   f"Threat Type: {threat_type}\n" \
+                   f"Source IP: {ip}\n\n" \
+                   f"Please log in to your dashboard immediately to view the full report."
         mail.send(msg)
+        print(f"📧 Alert email sent to {email}")
     except Exception as e:
-        print(f"Email failed: {e}")
+        print(f"❌ Email notification failed: {e}")
 
 
 # ================= ROUTES =================
@@ -174,9 +178,6 @@ def receive_alert():
     # Logic: If it's safe, set severity to LOW. If it's a threat, set to HIGH.
     severity = "HIGH" if threat_type != "[SAFE]" else "LOW"
 
-    if user and severity == "HIGH":
-        send_threat_email(user.email, threat_type, data.get("source_ip"))
-
     alert = Alert(
         user_id=user_id,
         source_ip=data.get("source_ip"),
@@ -186,6 +187,10 @@ def receive_alert():
 
     db.session.add(alert)
     db.session.commit()
+    
+    if user and severity == "HIGH":
+        notify_user_of_threat(user.email, threat_type, data.get("source_ip"))
+
     return jsonify({"status": "success"}), 200
 
 

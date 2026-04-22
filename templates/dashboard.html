@@ -97,6 +97,21 @@ function fetchAlerts() {
     .then(data => {
         const tbody = document.getElementById('live-alert-body');
         const sensorState = document.getElementById('sensor-state');
+
+        const totalSpan = document.getElementById('total-events');
+        const highSpan = document.getElementById('high-count');
+        const lowSpan = document.getElementById('low-count');
+
+        if (data && totalSpan) {
+            const total = data.length;
+            const high = data.filter(a => a.threat !== "[SAFE]").length;
+            const low = data.filter(a => a.threat === "[SAFE]").length;
+
+            totalSpan.innerText = total;
+            highSpan.innerText = high;
+            lowSpan.innerText = low;
+        }
+
         if (!tbody || !data) return;
 
         // 1. SORT DESCENDING (Newest Time first)

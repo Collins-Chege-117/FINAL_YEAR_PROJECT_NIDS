@@ -287,15 +287,16 @@ def get_alerts():
     if 'user_id' not in session:
         return jsonify([]), 401
         
-    alerts = Alert.query.filter_by(user_id=session['user_id']).all()
-    return jsonify([
-        {
-            "ip": a.source_ip,
-            "threat": a.threat_type,
+    user_alerts = Alert.query.filter_by(user_id=session['user_id']).all()
+    
+    output = []
+    for a in user_alerts:
+        output.append({
             "time": a.timestamp.isoformat(),
-            "severity": a.severity
-        } for a in alerts
-    ])
+            "ip": a.source_ip,
+            "threat": a.threat_type
+        })
+    return jsonify(output)
 
 
 @app.route('/dashboard/download-report')
@@ -334,7 +335,7 @@ def download_pdf():
         elements.append(Paragraph("NIDS Security Report", getSampleStyleSheet()['Title']))
         elements.append(table)
 
-        
+
     doc.build(elements)
     buffer.seek(0)
     return send_file(buffer, as_attachment=True, download_name="report.pdf")

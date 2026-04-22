@@ -286,8 +286,10 @@ def get_alerts():
     # Only get alerts for the logged-in user
     if 'user_id' not in session:
         return jsonify([]), 401
-        
+
+    db.session.commit()  
     user_alerts = Alert.query.filter_by(user_id=session['user_id']).all()
+    
     
     output = []
     for a in user_alerts:

@@ -92,7 +92,10 @@
 
 <script>
 function fetchAlerts() {
-    fetch('/api/alerts?t=' + new Date().getTime(), { credentials: 'include' })
+    fetch('/api/alerts?t=' + Date.now(), { 
+    credentials: 'include',
+    cache: "no-store" 
+    })
     .then(response => response.json())
     .then(data => {
         const tbody = document.getElementById('live-alert-body');
@@ -171,7 +174,7 @@ function fetchAlerts() {
 
 // Start polling immediately and then every 5 seconds
 fetchAlerts();
-setInterval(fetchAlerts, 5000);
+setInterval(fetchAlerts, 1500);
 </script>
 
 </body>

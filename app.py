@@ -48,6 +48,7 @@ class User(db.Model):
     phone = db.Column(db.String(20))
     password = db.Column(db.String(255))
     is_paid = db.Column(db.Boolean, default=False)
+    checkout_id = db.Column(db.String(100), nullable=True)
 
 class Alert(db.Model):
     __tablename__ = 'alert'
@@ -108,12 +109,13 @@ def trigger_stk_push(phone):
         }
 
         response = requests.post(stk_url, json=payload, headers=headers)
-        return response
-        print("[DARAJA RESPONSE]", response.text)
-    except Exception as e:
-        print("[DARAJA ERROR]", e)
-        return None
+        res_data = response.json()
 
+        return res_data.get("CheckoutRequestID")
+    except Exception as e:
+        print("[STK ERROR]", e)
+        return None
+       
 def notify_user_of_threat(email, threat_type, ip):
     try:
         msg = Message("🔴 NIDS SHIELD: HIGH PRIORITY ALERT",
@@ -143,25 +145,27 @@ def signup():
 
         # CASE 1: User exists and has already paid
         if user and user.is_paid:
-            flash("Email already exists. Please log in.")
+            flash("Account already exists. Please login.")
             return redirect(url_for('login'))
 
         # CASE 2: User exists but HAS NOT paid (Retry Payment)
         if user and not user.is_paid:
-            trigger_stk_push(phone)
+            cid = trigger_stk_push(phone)
+            user.checkout_id = cid
+            db.session.commit()
             session['pending_user_id'] = user.id
-            flash("Attempting to re-send payment prompt...")
             return render_template('waiting_payment.html')
 
         # CASE 3: Brand new user
-        trigger_stk_push(phone)
+        cid = trigger_stk_push(phone)
         hashed_pw = generate_password_hash(request.form['password'])
         new_user = User(
             username=request.form['username'],
             email=email,
             phone=phone,
             password=hashed_pw,
-            is_paid=False
+            is_paid=False,
+            checkout_id=cid
         )
         db.session.add(new_user)
         db.session.commit()
@@ -178,41 +182,34 @@ def check_payment():
     if not user_id:
         return jsonify({"paid": False})
     
+    # Refresh user from database to see if the callback updated 'is_paid'
     user = User.query.get(user_id)
+    
     if user and user.is_paid:
-        session.pop('pending_user_id', None) # Clean up
+        # User has successfully paid
+        session.pop('pending_user_id', None) # Clear the pending session
         return jsonify({"paid": True})
     
     return jsonify({"paid": False})
 
+
 @app.route('/callback', methods=['POST'])
 def mpesa_callback():
     data = request.get_json()
-    
-    # The ResultCode 0 means the user successfully entered their PIN and paid
     stk_callback_response = data['Body']['stkCallback']
     result_code = stk_callback_response['ResultCode']
-    
-    if result_code == 0:
-        # Get the phone number from the callback metadata to find the user
-        # Safaricom sends metadata in a list; we look for 'PhoneNumber'
-        metadata = stk_callback_response['CallbackMetadata']['Item']
-        phone = None
-        for item in metadata:
-            if item['Name'] == 'PhoneNumber':
-                phone = str(item['Value'])
-                break
-        
-        if phone:
-            # Match the user in your DB. 
-            # Note: Safaricom sends 254..., ensure your query handles your format
-            user = User.query.filter(User.phone.contains(phone[-9:])).first()
-            if user:
-                user.is_paid = True
-                db.session.commit()
-                print(f"✅ Payment successful for {user.username}")
+    checkout_id = stk_callback_response['CheckoutRequestID'] # Get the ID from Safaricom
 
-    return jsonify({"ResultCode": 0, "ResultDesc": "Accepted"})
+    if result_code == 0:
+        # Match the user exactly by the ID we saved earlier
+        user = User.query.filter_by(checkout_id=checkout_id).first()
+        if user:
+            user.is_paid = True
+            db.session.commit()
+            print(f"Verified payment for: {user.username}")
+            
+    return jsonify({"ResultCode": 0, "ResultDesc": "Success"})
+
 
 
 
@@ -224,9 +221,11 @@ def login():
         if user and check_password_hash(user.password, request.form['password']):
             if not user.is_paid:
                 # Trigger payment again if they try to log in without paying
-                trigger_stk_push(user.phone)
+                cid = trigger_stk_push(user.phone)
+                user.checkout_id = cid
+                db.session.commit()
                 session['pending_user_id'] = user.id
-                flash("Payment required. Please check your phone for the M-Pesa prompt.")
+                flash("Please complete your M-Pesa payment.")
                 return render_template('waiting_payment.html')
             
             session['user_id'] = user.id

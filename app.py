@@ -138,27 +138,39 @@ def index():
 def signup():
     if request.method == 'POST':
         email = request.form.get('email')
-        if User.query.filter_by(email=email).first():
-            flash("Email already exists.")
+        phone = request.form.get('phone')
+        user = User.query.filter_by(email=email).first()
+
+        # CASE 1: User exists and has already paid
+        if user and user.is_paid:
+            flash("Email already exists. Please log in.")
             return redirect(url_for('login'))
 
-        trigger_stk_push(request.form.get('phone'))
-        hashed_pw = generate_password_hash(request.form['password'])
+        # CASE 2: User exists but HAS NOT paid (Retry Payment)
+        if user and not user.is_paid:
+            trigger_stk_push(phone)
+            session['pending_user_id'] = user.id
+            flash("Attempting to re-send payment prompt...")
+            return render_template('waiting_payment.html')
 
-        user = User(
+        # CASE 3: Brand new user
+        trigger_stk_push(phone)
+        hashed_pw = generate_password_hash(request.form['password'])
+        new_user = User(
             username=request.form['username'],
             email=email,
-            phone=request.form['phone'],
+            phone=phone,
             password=hashed_pw,
             is_paid=False
         )
-        db.session.add(user)
+        db.session.add(new_user)
         db.session.commit()
-
-        session['pending_user_id'] = user.id
-
+        
+        session['pending_user_id'] = new_user.id
         return render_template('waiting_payment.html')
+
     return render_template('signup.html')
+
 
 @app.route('/api/check-payment')
 def check_payment():
@@ -208,15 +220,21 @@ def mpesa_callback():
 def login():
     if request.method == 'POST':
         user = User.query.filter_by(email=request.form['email']).first()
+        
         if user and check_password_hash(user.password, request.form['password']):
             if not user.is_paid:
-                flash("Access Denied: Please complete your M-Pesa payment first.")
-                return redirect(url_for('login'))
+                # Trigger payment again if they try to log in without paying
+                trigger_stk_push(user.phone)
+                session['pending_user_id'] = user.id
+                flash("Payment required. Please check your phone for the M-Pesa prompt.")
+                return render_template('waiting_payment.html')
             
             session['user_id'] = user.id
             return redirect(url_for('dashboard'))
+            
         flash("Invalid credentials")
     return render_template('login.html')
+
 
 @app.route('/dashboard')
 def dashboard():

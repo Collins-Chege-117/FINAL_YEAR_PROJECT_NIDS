@@ -155,9 +155,24 @@ def signup():
         db.session.add(user)
         db.session.commit()
 
-        flash("M-Pesa prompt sent! Complete payment on your phone, then log in.")
-        return redirect(url_for('login'))
+        session['pending_user_id'] = user.id
+
+        return render_template('waiting_payment.html')
     return render_template('signup.html')
+
+@app.route('/api/check-payment')
+def check_payment():
+    user_id = session.get('pending_user_id')
+    if not user_id:
+        return jsonify({"paid": False})
+    
+    user = User.query.get(user_id)
+    if user and user.is_paid:
+        session.pop('pending_user_id', None) # Clean up
+        return jsonify({"paid": True})
+    
+    return jsonify({"paid": False})
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

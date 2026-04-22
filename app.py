@@ -187,7 +187,8 @@ def check_payment():
     
     if user and user.is_paid:
         # User has successfully paid
-        session.pop('pending_user_id', None) # Clear the pending session
+        session['user_id'] = user.id 
+        session.pop('pending_user_id', None) 
         return jsonify({"paid": True})
     
     return jsonify({"paid": False})

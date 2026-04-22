@@ -173,6 +173,36 @@ def check_payment():
     
     return jsonify({"paid": False})
 
+@app.route('/callback', methods=['POST'])
+def mpesa_callback():
+    data = request.get_json()
+    
+    # The ResultCode 0 means the user successfully entered their PIN and paid
+    stk_callback_response = data['Body']['stkCallback']
+    result_code = stk_callback_response['ResultCode']
+    
+    if result_code == 0:
+        # Get the phone number from the callback metadata to find the user
+        # Safaricom sends metadata in a list; we look for 'PhoneNumber'
+        metadata = stk_callback_response['CallbackMetadata']['Item']
+        phone = None
+        for item in metadata:
+            if item['Name'] == 'PhoneNumber':
+                phone = str(item['Value'])
+                break
+        
+        if phone:
+            # Match the user in your DB. 
+            # Note: Safaricom sends 254..., ensure your query handles your format
+            user = User.query.filter(User.phone.contains(phone[-9:])).first()
+            if user:
+                user.is_paid = True
+                db.session.commit()
+                print(f"✅ Payment successful for {user.username}")
+
+    return jsonify({"ResultCode": 0, "ResultDesc": "Accepted"})
+
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

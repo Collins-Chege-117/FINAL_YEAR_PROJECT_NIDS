@@ -15,16 +15,21 @@
     <p>Do not close this window. We will redirect you automatically once confirmed.</p>
 
     <script>
-        function checkStatus() {
-            fetch('/api/check-payment')
-                .then(res => res.json())
-                .then(data => {
-                    if (data.paid) {
-                        window.location.href = "/login";
-                    }
-                });
-        }
-        setInterval(checkStatus, 3000); // Check every 3 seconds
+        const checkStatus = setInterval(async () => {
+            try {
+                const response = await fetch('/api/check-payment');
+                const data = await response.json();
+
+                if (data.paid === true) {
+                    clearInterval(checkStatus);
+                    // Redirect to login or dashboard once paid
+                    window.location.href = "/login"; 
+                }
+            } catch (error) {
+                console.error("Error checking payment:", error);
+            }
+        }, 3000); // Check every 3 seconds
     </script>
+
 </body>
 </html>

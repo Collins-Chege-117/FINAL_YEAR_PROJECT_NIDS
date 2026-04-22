@@ -226,7 +226,7 @@ def login():
                 user.checkout_id = cid
                 db.session.commit()
                 session['pending_user_id'] = user.id
-                flash("Please complete your M-Pesa payment.")
+                
                 return render_template('waiting_payment.html')
             
             session['user_id'] = user.id
@@ -244,8 +244,8 @@ def dashboard():
     # 1. Fetch the user object using the ID stored in the session
     user = User.query.get(session['user_id'])
     
-    # 2. Fetch the alerts
-    alerts = Alert.query.filter_by(user_id=session['user_id']).all()
+    # 2. Fetch the alerts for a specific user
+    alerts = Alert.query.filter_by(user_id=session['user_id']).order_by(Alert.timestamp.desc()).all()
     
     # 3. Pass BOTH user and alerts to the template
     return render_template('dashboard.html', user=user, alerts=alerts)
@@ -300,18 +300,41 @@ def get_alerts():
 
 @app.route('/dashboard/download-report')
 def download_pdf():
-    alerts = Alert.query.filter_by(severity="HIGH").all()
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    alerts = Alert.query.filter_by(
+        severity="HIGH", 
+        user_id=session['user_id']
+    ).order_by(Alert.timestamp.desc()).all()
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer)
     elements = []
-    data = [['Timestamp', 'IP', 'Threat']]
-    for a in alerts:
-        data.append([a.timestamp.strftime('%Y-%m-%d %H:%M'), a.source_ip, a.threat_type])
-    
-    table = Table(data)
-    table.setStyle(TableStyle([('BACKGROUND', (0,0), (-1,0), colors.teal), ('TEXTCOLOR', (0,0), (-1,0), colors.white)]))
-    elements.append(Paragraph("NIDS Report", getSampleStyleSheet()['Title']))
-    elements.append(table)
+
+    if not alerts:
+        elements.append(Paragraph("NIDS Report", getSampleStyleSheet()['Title']))
+        elements.append(Paragraph("No high-severity threats detected for your account.", getSampleStyleSheet()['Normal']))
+    else:
+        data = [['Timestamp', 'IP Address', 'Threat Type']]
+        for a in alerts:
+            data.append([
+                a.timestamp.strftime('%Y-%m-%d %H:%M'), 
+                a.source_ip, 
+                a.threat_type
+            ])
+        
+        table = Table(data)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.teal), 
+            ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('GRID', (0,0), (-1,-1), 0.5, colors.grey)
+        ]))
+        
+        elements.append(Paragraph("NIDS Security Report", getSampleStyleSheet()['Title']))
+        elements.append(table)
+
+        
     doc.build(elements)
     buffer.seek(0)
     return send_file(buffer, as_attachment=True, download_name="report.pdf")

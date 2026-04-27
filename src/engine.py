@@ -2,6 +2,8 @@ import scapy.all as scapy
 from scapy.layers.inet import IP
 import requests
 import os
+import tkinter as tk
+from tkinter import simpledialog
 from dotenv import load_dotenv
 from threat_intel import ThreatIntel # Import your class
 
@@ -9,47 +11,53 @@ load_dotenv()
 
 class NIDSSniffer:
     def __init__(self):
-        self.RAILWAY_API_URL = "https://railway.app"
-        self.USER_ID = 1
+        self.RAILWAY_API_URL = "https://web-production-8c5fe.up.railway.app/api/alerts"
+        root = tk.Tk()
+        root.withdraw() 
+        self.username = simpledialog.askstring("NIDS Shield", "Enter your Username:")
+        root.destroy()
         self.intel = ThreatIntel() # Initialize Intel Class
         self.checked_ips = {} # Local cache to save API credits
 
     def report_alert(self, ip, threat_type):
         payload = {
-            "user_id": self.USER_ID,
+            "username": self.username,
             "source_ip": ip,
             "threat_type": threat_type,
             "severity": "HIGH"
         }
         try:
-            requests.post(self.RAILWAY_API_URL, json=payload, timeout=5)
-            print(f"🚨 [ALERT SENT] {ip} | {threat_type}")
+            requests.post(self.RAILWAY_API_URL, json=payload, timeout=15)
+            print(f"[ALERT SENT] {ip} | {threat_type}")
         except Exception as e:
-            print(f"❌ [API ERROR] {e}")
+            print(f"[API ERROR] {e}")
 
     def sniff_callback(self, packet):
         if packet.haslayer(IP):
             src_ip = packet[IP].src
-            
-            # 1. Skip local traffic and previously checked safe IPs
-            if src_ip.startswith(("192.168.", "127.", "10.", "172.16.")) or src_ip in self.checked_ips:
+            dst_ip = packet[IP].dst # Capture the destination!
+
+            # Logic: If the destination is NOT your local IP, it's the threat
+            target_ip = None
+            if not dst_ip.startswith(("192.168.", "127.", "10.")):
+                target_ip = dst_ip
+            # Logic: If the source is NOT your local IP, it's a threat attacking you
+            elif not src_ip.startswith(("192.168.", "127.", "10.")):
+                target_ip = src_ip
+
+            if not target_ip or target_ip in self.checked_ips:
                 return
 
-            # 2. Check for SQL Injection in Raw Data
-            if packet.haslayer(scapy.Raw):
-                payload = str(packet[scapy.Raw].load).lower()
-                if any(p in payload for p in ["select", "union", "1=1", "--"]):
-                    self.report_alert(src_ip, "SQL Injection Pattern Detected")
-                    self.checked_ips[src_ip] = True
-                    return
+            # NEW: Check both reputation signals for the 'target_ip'
+            report = self.intel.get_threat_report(target_ip)
+            if report:
+                self.report_alert(target_ip, report)
+            else:
+                self.report_alert(target_ip, "[SAFE]")
+                
+            self.checked_ips[target_ip] = True
 
-            # 3. Use ThreatIntel Class for API Lookups
-            threat_report = self.intel.get_threat_report(src_ip)
-            if threat_report:
-                self.report_alert(src_ip, threat_report)
-            
-            # Mark as checked so we don't spam APIs for the same IP
-            self.checked_ips[src_ip] = True
+
 
     def start(self):
         print("🛡️ NIDS Engine Started. Monitoring Live Traffic...")

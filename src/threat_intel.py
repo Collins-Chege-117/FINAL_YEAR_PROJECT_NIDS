@@ -7,8 +7,8 @@ load_dotenv()
 
 class ThreatIntel:
     def __init__(self):
-        self.abuse_key = os.getenv("ABUSEIPDB_API_KEY")
-        self.otx_key = os.getenv("OTX_API_KEY")
+        self.abuse_key = "a6f31507d5dedef8bb587d214be5b7f68fbddb0300d72104f88100594c9d3e14b3a3d844b1e7e544"
+        self.otx_key = "9b44b3b43350e197e09b5d1261f8c32794957bbae5613f49c13e3b420454062c"
 
     def check_abuseipdb(self, ip):
         if not self.abuse_key:
@@ -48,16 +48,15 @@ class ThreatIntel:
             return False
 
     def get_threat_report(self, ip):
+       
         if ip.startswith(("192.168.", "127.", "10.", "172.16.")):
             return None
 
         abuse_score = self.check_abuseipdb(ip)
         is_otx = self.check_alienvault(ip)
 
-        if abuse_score > 50 or is_otx:
-            report = f"Malicious IP | Abuse Score: {abuse_score}"
-            if is_otx:
-                report += " | Found in OTX"
+        if abuse_score >= 50 and is_otx:
+            report = f"CONFIRMED THREAT | Abuse Score: {abuse_score} | Verified by OTX"
             return report
 
         return None

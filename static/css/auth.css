@@ -1,16 +1,24 @@
 .auth-body {
     background-color: #1aa1a5;
     color: white;
-    font-family: 'Segoe UI', sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
     display: flex;
+    justify-content: center; 
     align-items: center;
     min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
 }
 
 .auth-card {
     width: 100%;
     max-width: 400px;
-    margin: auto;
     text-align: center;
 }
 
@@ -44,7 +52,7 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.6);
     border-radius: 0;
     color: white;
-    padding: 10px 10px 10px 35px;
+    padding: 10px 0;
     width: 100%;
     transition: 0.3s;
 }
@@ -97,4 +105,15 @@
 .social-footer i {
     margin: 0 10px;
     opacity: 0.8;
+}
+
+@media (max-width: 480px) {
+    .auth-card {
+        max-width: 100%;
+        padding: 0 10px;
+    }
+    
+    .btn-auth, .btn-google {
+        width: 100%; /* Full width buttons on very small screens */
+    }
 }
